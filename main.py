@@ -12,6 +12,9 @@ from logger_proxy import LoggerProxy
 from main_layout import CustomLayout
 from axes_controller import AxesController, AxesTypes
 from menubar import MenuBar
+from serial_reader import SerialReaderThread
+from data_controller import DataController
+from utils import get_file_path_from_dialog
 
 Logger = None
 
@@ -24,7 +27,9 @@ class App(QMainWindow):
         self.controller_layout = None   # ...
         self.menu_bar = None            # ...
         self.logger_proxy = None        # ...
+        self.serial_readers = {}        # ...
         self.plot_widget = self.init_plot()
+        self.data_controller = DataController(self)
         self.init()
         self.init_signals()
 
@@ -57,6 +62,24 @@ class App(QMainWindow):
         self.controller_layout.test_plot_button.pressed.connect(test_plot)
         self.controller_layout.clear_plot_button.pressed.connect(test_clear)
         self.controller_layout.update_plot_button.pressed.connect(test_update)
+        self.controller_layout.start_reader_button.pressed.connect(self.create_reader_thread)
+
+        self.menu_bar.action_save.triggered.connect(self.data_controller.save_data)
+
+        self.controller_layout.serial_connector.ready_to_start_reading_signal.connect(self.found_serial_dummy)
+
+    def found_serial_dummy(self, ax_type, path):
+        print(self.serial_readers)
+        if ax_type == AxesTypes.ALL:
+            for reader in self.serial_readers.values():
+                reader.start()
+        else:
+            self.serial_readers[ax_type].set_read_path(path)
+
+    def create_reader_thread(self):
+        selected = self.controller_layout.get_selected_plot()
+        tp = AxesTypes[selected]
+        self.serial_readers[tp].start()
 
     def init_layout(self, info, plots):
         w = QWidget()
@@ -84,6 +107,10 @@ class App(QMainWindow):
         self.curr_layout = self.init_layout(info=info_output, plots=self.plot_widget)
         self.controller_layout = self.curr_layout.controller_layout
 
+        for tp in AxesTypes.get_entries():
+            self.serial_readers[tp] = SerialReaderThread(tp)
+            self.serial_readers[tp].got_data_signal.connect(self.plot_widget.try_plot)
+
         self.show()
 
 
@@ -109,6 +136,13 @@ class PlotCanvas(FigureCanvas):
 
     def update_plot(self, data_x, data_y, axes_types):
         self.axes_controller.update_plot(data_x, data_y, axes_types)
+        self.draw()
+
+    def handle_new_data(self, data, ax_type):
+        self.try_plot(data, data, ax_type)
+
+    def try_plot(self, data_x, data_y, ax_type):
+        self.axes_controller.try_plot(data_x, data_y, ax_type)
         self.draw()
 
 

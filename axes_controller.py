@@ -7,10 +7,8 @@ from matplotlib.lines import Line2D
 class AxesTypes(Enum):
 
     ALL = 0
-    TBD1 = 'Plot 1 name'
-    TBD2 = 'Plot 2 name'
-    TBD3 = 'Plot 3 name'
-    TBD4 = 'Plot 4 name'
+    VAC = 'VAC'  # 'Volt-Ampere Characteristic'
+    LAC = 'LAC'  # 'Lumen-Ampere Characteristic'
 
     @staticmethod
     def get_names():
@@ -31,12 +29,13 @@ class AxesController:
         self.data_map = {k: [] for k in AxesTypes}
         for indx, tp in enumerate(AxesTypes.get_entries(), 1):
             ax: Axes = figure.add_subplot(220 + indx)
+            ax.autoscale(enable=True, tight=True)
             ax.set_title(tp.value)
             self.axes_map[tp] = ax
 
     def _plot_wrapper(self, data_x, data_y, type):
         ax = self.axes_map[type]
-        line, = ax.plot(data_x, data_y, '.')
+        line, *rest = ax.plot(data_x, data_y, '.')
         self.data_map[type].append(line)
 
     def _clear_wrapper(self, type):
@@ -53,6 +52,8 @@ class AxesController:
         line = lst[-1]
         line.set_xdata(data_x)
         line.set_ydata(data_y)
+        ax = self.axes_map[type]
+        ax.autoscale_view()
 
     def plot_data(self, data_x, data_y, axes_type):
         if axes_type == AxesTypes.ALL:
@@ -60,6 +61,12 @@ class AxesController:
                 self._plot_wrapper(data_x, data_y, tp)
         else:
             self._plot_wrapper(data_x, data_y, axes_type)
+
+    def try_plot(self, data_x, data_y, ax_type):
+        if len(self.data_map[ax_type]):
+            self._update_wrapper(data_x, data_y, ax_type)
+        else:
+            self._plot_wrapper(data_x, data_y, ax_type)
 
     def clear(self, axes_type):
         if axes_type == AxesTypes.ALL:
