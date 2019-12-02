@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QMenuBar
+from PyQt5.QtCore import pyqtSignal
+from logger import Logger
 
 
 class MenuBar(QMenuBar):
@@ -10,6 +12,8 @@ class MenuBar(QMenuBar):
         self.action_quit = None
         self.action_connect = None
         self.action_disconnect = None
+        self.action_clear_buffer = None
+        self.action_pause_reading = None
         self.init()
 
     def init(self):
@@ -18,7 +22,13 @@ class MenuBar(QMenuBar):
         self.action_load = file_menu.addAction('Load')
         self.action_close = file_menu.addAction('Close')
         self.action_quit = file_menu.addAction('Quit')
+        self.action_clear_buffer = file_menu.addAction('Clear logging window')
 
         serial_menu = self.addMenu('Serial')
         self.action_connect = serial_menu.addAction('Connect')
         self.action_disconnect = serial_menu.addAction('Disconnect')
+        self.action_disconnect.setEnabled(False)
+
+        exp_menu = self.addMenu('Experimental')
+        self.action_pause_reading = exp_menu.addAction('Pause connection')
+        self.action_pause_reading.setEnabled(False)

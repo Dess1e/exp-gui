@@ -4,25 +4,24 @@ import random
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QSizePolicy, QPushButton, QTextEdit, QWidget,
 )
+from PyQt5.QtGui import QTextOption
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from logger_proxy import LoggerProxy
+from logger import Logger
 from main_layout import CustomLayout
 from axes_controller import AxesController, AxesTypes
 from menubar import MenuBar
 from serial_reader import SerialReaderThread
 from data_controller import DataController
-from utils import get_file_path_from_dialog
-
-Logger = None
 
 
 class App(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title = 'untitled'
+        self.readers_initialized = True
         self.curr_layout = None         # to be initialized in init_ui
         self.controller_layout = None   # ...
         self.menu_bar = None            # ...
@@ -65,16 +64,53 @@ class App(QMainWindow):
         self.controller_layout.start_reader_button.pressed.connect(self.create_reader_thread)
 
         self.menu_bar.action_save.triggered.connect(self.data_controller.save_data)
+        self.menu_bar.action_clear_buffer.triggered.connect(lambda: Logger.clear_buffer())
+        self.menu_bar.action_connect.triggered.connect(self.start_reading)
+        self.menu_bar.action_close.triggered.connect(self.close)
+        self.menu_bar.action_disconnect.triggered.connect(self.stop_reading)
+        self.menu_bar.action_pause_reading.triggered.connect(self.pause_reading)
 
-        self.controller_layout.serial_connector.ready_to_start_reading_signal.connect(self.found_serial_dummy)
+        self.controller_layout.serial_connector.ready_to_start_reading_signal.connect(self.found_serial)
 
-    def found_serial_dummy(self, ax_type, path):
-        print(self.serial_readers)
+    def init_readers(self):
+        for tp in AxesTypes.get_entries():
+            self.serial_readers[tp] = SerialReaderThread(tp)
+            self.serial_readers[tp].got_data_signal.connect(self.process_read_data)
+
+    def found_serial(self, ax_type, path):
         if ax_type == AxesTypes.ALL:
-            for reader in self.serial_readers.values():
-                reader.start()
+            Logger.log('All devices were found')
         else:
+            Logger.log('Found device at %s' % path)
             self.serial_readers[ax_type].set_read_path(path)
+
+    def start_reading(self):
+        if not self.readers_initialized:
+            self.init_readers()
+        for reader in self.serial_readers.values():
+            #TODO: Test
+            if reader.ax_type == AxesTypes.VAC:
+                continue
+            #endtest
+            reader.start()
+        self.menu_bar.action_disconnect.setEnabled(True)
+        self.menu_bar.action_connect.setEnabled(False)
+
+    def pause_reading(self):
+        Logger.warn('Tasking all reader threads to pause')
+        for reader in self.serial_readers.values():
+            reader.requestInterruption()
+
+    def stop_reading(self):
+        for reader in self.serial_readers.values():
+            reader.terminate()
+        self.menu_bar.action_disconnect.setEnabled(False)
+        self.menu_bar.action_connect.setEnabled(True)
+
+    def close(self):
+        self.readers_initialized = False
+        self.serial_readers = {}
+        self.plot_widget.clear(AxesTypes.ALL)
 
     def create_reader_thread(self):
         selected = self.controller_layout.get_selected_plot()
@@ -100,18 +136,18 @@ class App(QMainWindow):
 
         info_output = QTextEdit(self)
         info_output.setReadOnly(True)
-        self.logger_proxy = LoggerProxy(info_output)
-        global Logger
-        Logger = self.logger_proxy
+        info_output.setWordWrapMode(QTextOption.WrapAnywhere)
+        self.logger_proxy = Logger(lambda text: info_output.setHtml(text))
 
         self.curr_layout = self.init_layout(info=info_output, plots=self.plot_widget)
         self.controller_layout = self.curr_layout.controller_layout
 
-        for tp in AxesTypes.get_entries():
-            self.serial_readers[tp] = SerialReaderThread(tp)
-            self.serial_readers[tp].got_data_signal.connect(self.plot_widget.try_plot)
-
+        self.init_readers()
         self.show()
+
+    def process_read_data(self, x_data, y_data, aux_data, ax_type):
+        if ax_type == AxesTypes.LAC:
+            self.plot_widget.try_plot(x_data, y_data, AxesTypes.LAC)
 
 
 class PlotCanvas(FigureCanvas):

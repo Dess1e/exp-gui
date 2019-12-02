@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QWidget, QLabel
 
 from utils import serial_like_data_generator, find_device_path
 from axes_controller import AxesTypes
+from hardware_readers import Reader, ArduinoReader
+from logger import Logger
 
 
 class SerialConnector(QWidget):
@@ -39,30 +41,62 @@ class SerialConnector(QWidget):
 
 
 class SerialReaderThread(QThread):
-    got_data_signal = pyqtSignal(list, list, AxesTypes)
+    got_data_signal = pyqtSignal(list, list, list, AxesTypes)
+    # x_data, y_data, aux_data
 
     def __init__(self, ax_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._interrupted = False
+        self._terminated = False
         self.x_data = []
         self.y_data = []
+        self.aux_data = []
         self.ax_type = ax_type
         self.device_path = None
+        self.reader = None
 
     def set_read_path(self, path):
         self.device_path = path
+        self.reader = self.init_reader()
+
+    def init_reader(self) -> Reader:
+        if self.ax_type == AxesTypes.VAC:
+            raise Exception
+        elif self.ax_type == AxesTypes.LAC:
+            return ArduinoReader(self.device_path)
+
+    def requestInterruption(self) -> None:
+        self._interrupted = True
+
+    def terminate(self) -> None:
+        self._terminated = True
+
+    def resume(self):
+        self._interrupted = False
 
     def run(self) -> None:
         t = time()
         while True:
-            if self.isInterruptionRequested():
+            if self._interrupted:
                 sleep(0.5)
                 continue
-            x_data = serial_like_data_generator()
-            y_data = serial_like_data_generator()
-            self.x_data += x_data
-            self.y_data += y_data
+            if self._terminated:
+                # reader will gracefully terminate closing all file handles
+                del self.reader
+                return
+            data = self.reader.read()
+            if data is None:
+                continue
+            self.x_data += [data['x_data']]
+            self.y_data += [data['y_data']]
+            self.aux_data += data['aux_data']
             if time() - t > 0.5:
-                self.got_data_signal.emit(self.x_data, self.y_data, self.ax_type)
+                self.got_data_signal.emit(
+                    self.x_data,
+                    self.y_data,
+                    self.aux_data,
+                    self.ax_type
+                )
                 t = time()
 
 
