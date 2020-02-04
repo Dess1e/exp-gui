@@ -9,6 +9,7 @@ from PyQt5.QtGui import QTextOption
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from configuration_manager import ConfigurationManager
 from logger import Logger
 from main_layout import CustomLayout
 from axes_controller import AxesController, AxesTypes
@@ -29,6 +30,7 @@ class App(QMainWindow):
         self.serial_readers = {}        # ...
         self.plot_widget = self.init_plot()
         self.data_controller = DataController(self)
+        self.config_manager = ConfigurationManager()
         self.init()
         self.init_signals()
 
@@ -69,6 +71,7 @@ class App(QMainWindow):
         self.menu_bar.action_close.triggered.connect(self.close)
         self.menu_bar.action_disconnect.triggered.connect(self.stop_reading)
         self.menu_bar.action_pause_reading.triggered.connect(self.pause_reading)
+        self.menu_bar.action_create.triggered.connect(lambda: self.config_manager.show())
 
         self.controller_layout.serial_connector.ready_to_start_reading_signal.connect(self.found_serial)
 

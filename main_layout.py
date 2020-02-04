@@ -1,5 +1,3 @@
-from math import sqrt
-
 from PyQt5.QtWidgets import QGridLayout
 
 from controller_layout import ControllerLayout

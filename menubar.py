@@ -14,12 +14,14 @@ class MenuBar(QMenuBar):
         self.action_disconnect = None
         self.action_clear_buffer = None
         self.action_pause_reading = None
+        self.action_create = None
         self.init()
 
     def init(self):
         file_menu = self.addMenu('File')
         self.action_load = file_menu.addAction('Load configuration')
         self.action_save = file_menu.addAction('Save configuration')
+        self.action_create = file_menu.addAction('Create configuration')
         self.action_close = file_menu.addAction('Close')
         self.action_quit = file_menu.addAction('Quit')
         self.action_clear_buffer = file_menu.addAction('Clear logging window')
