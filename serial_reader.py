@@ -23,6 +23,7 @@ class SerialConnector(QWidget):
     def init(self):
         self.searcher_thread.found_serial_signal.connect(self.found_serial)
         self.update_info()
+        Logger.log('Starting to look for serial devices')
         self.searcher_thread.start()
 
     def update_info(self):

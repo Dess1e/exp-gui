@@ -18,8 +18,8 @@ class MenuBar(QMenuBar):
 
     def init(self):
         file_menu = self.addMenu('File')
-        self.action_save = file_menu.addAction('Save')
-        self.action_load = file_menu.addAction('Load')
+        self.action_load = file_menu.addAction('Load configuration')
+        self.action_save = file_menu.addAction('Save configuration')
         self.action_close = file_menu.addAction('Close')
         self.action_quit = file_menu.addAction('Quit')
         self.action_clear_buffer = file_menu.addAction('Clear logging window')
@@ -27,6 +27,7 @@ class MenuBar(QMenuBar):
         serial_menu = self.addMenu('Serial')
         self.action_connect = serial_menu.addAction('Connect')
         self.action_disconnect = serial_menu.addAction('Disconnect')
+        self.action_connect.setEnabled(False)
         self.action_disconnect.setEnabled(False)
 
         exp_menu = self.addMenu('Experimental')

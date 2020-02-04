@@ -80,11 +80,14 @@ class App(QMainWindow):
     def found_serial(self, ax_type, path):
         if ax_type == AxesTypes.ALL:
             Logger.log('All devices were found')
+            self.menu_bar.action_connect.setEnabled(True)
         else:
             Logger.log('Found device at %s' % path)
             self.serial_readers[ax_type].set_read_path(path)
 
     def start_reading(self):
+        if ...:
+            return
         if not self.readers_initialized:
             self.init_readers()
         for reader in self.serial_readers.values():
