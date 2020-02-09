@@ -1,13 +1,12 @@
 import os
+from itertools import tee
 from pathlib import Path
 from datetime import datetime
 from random import random
+from string import digits
+
 
 from PyQt5.QtWidgets import QFileDialog
-
-
-class SerialDeviceReader:
-    ...
 
 
 def get_timestamp(fmt='%d-%m-%Y %H:%M:%S'):
@@ -48,3 +47,18 @@ def find_device_path(device_name_part: str):
             return str(Path(path_to_find) / device_name)
     else:
         return None
+
+
+def filter_numerical_string(string: str) -> str:
+    """
+    Filters out non numerical characters from given string
+    """
+    return ''.join(list(filter(lambda x: x in digits, string)))
+
+
+def pairwise(iterable):
+    """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
+

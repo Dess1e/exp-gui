@@ -55,8 +55,8 @@ class App(QMainWindow):
             selected = self.controller_layout.get_selected_plot()
             e = AxesTypes[selected]
             self.plot_widget.update_plot(
-                [random.random() for x in range(5)],
-                [random.random() for x in range(5)],
+                [random.random() for _ in range(5)],
+                [random.random() for _ in range(5)],
                 e
             )
 
@@ -66,12 +66,13 @@ class App(QMainWindow):
         self.controller_layout.start_reader_button.pressed.connect(self.create_reader_thread)
 
         self.menu_bar.action_save.triggered.connect(self.data_controller.save_data)
-        self.menu_bar.action_clear_buffer.triggered.connect(lambda: Logger.clear_buffer())
+        self.menu_bar.action_clear_buffer.triggered.connect(Logger.clear_buffer)
         self.menu_bar.action_connect.triggered.connect(self.start_reading)
         self.menu_bar.action_close.triggered.connect(self.close)
         self.menu_bar.action_disconnect.triggered.connect(self.stop_reading)
         self.menu_bar.action_pause_reading.triggered.connect(self.pause_reading)
-        self.menu_bar.action_create.triggered.connect(lambda: self.config_manager.show())
+        self.menu_bar.action_create.triggered.connect(self.config_manager.show)
+        self.menu_bar.action_load.triggered.connect(self.config_manager.load_config)
 
         self.controller_layout.serial_connector.ready_to_start_reading_signal.connect(self.found_serial)
 

@@ -15,6 +15,8 @@ class MenuBar(QMenuBar):
         self.action_clear_buffer = None
         self.action_pause_reading = None
         self.action_create = None
+        self.action_calibrate_temp = None
+        self.action_calibrate_curr = None
         self.init()
 
     def init(self):
@@ -35,3 +37,9 @@ class MenuBar(QMenuBar):
         exp_menu = self.addMenu('Experimental')
         self.action_pause_reading = exp_menu.addAction('Pause connection')
         self.action_pause_reading.setEnabled(False)
+
+        calibrate = self.addMenu('Calibrate')
+        self.action_calibrate_temp = calibrate.addAction('Cal. temperature')
+        self.action_calibrate_temp.setEnabled(False)
+        self.action_calibrate_curr = calibrate.addAction('Cal. current')
+        self.action_calibrate_curr.setEnabled(False)

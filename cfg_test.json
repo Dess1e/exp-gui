@@ -1,0 +1,1 @@
+[{"start_temp": 10, "end_temp": 20, "stage_duration": 30, "is_measurement": false}, {"start_temp": 0, "end_temp": 0, "stage_duration": 0, "is_measurement": true}, {"start_temp": 20, "end_temp": 30, "stage_duration": 30, "is_measurement": false}]
